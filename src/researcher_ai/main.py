@@ -1,7 +1,10 @@
 import argparse
+import json
 
 from researcher_ai.chunking.pipeline import chunk_ingested_records
 from researcher_ai.ingest.pipeline import ingest_materials
+from researcher_ai.notes.generator import generate_notes
+from researcher_ai.retrieval.index import build_index, search_index
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -62,6 +65,73 @@ def build_parser() -> argparse.ArgumentParser:
         help="Minimum characters for a valid chunk",
     )
 
+    index = subparsers.add_parser("index", help="Build retrieval index from chunks")
+    index.add_argument(
+        "--input",
+        default="data/processed/chunks.jsonl",
+        help="Path to chunk JSONL",
+    )
+    index.add_argument(
+        "--index-output",
+        default="data/processed/retrieval_vectors.npy",
+        help="Path for vector index (.npy)",
+    )
+    index.add_argument(
+        "--meta-output",
+        default="data/processed/retrieval_meta.jsonl",
+        help="Path for retrieval metadata JSONL",
+    )
+    index.add_argument(
+        "--model",
+        default="sentence-transformers/all-MiniLM-L6-v2",
+        help="Embedding model name",
+    )
+
+    search = subparsers.add_parser("search", help="Search indexed chunks by query")
+    search.add_argument("--query", required=True, help="Search question")
+    search.add_argument(
+        "--index-input",
+        default="data/processed/retrieval_vectors.npy",
+        help="Path to vector index (.npy)",
+    )
+    search.add_argument(
+        "--meta-input",
+        default="data/processed/retrieval_meta.jsonl",
+        help="Path to retrieval metadata JSONL",
+    )
+    search.add_argument("--top-k", type=int, default=5, help="Top K results")
+    search.add_argument(
+        "--model",
+        default="sentence-transformers/all-MiniLM-L6-v2",
+        help="Embedding model name",
+    )
+
+    notes = subparsers.add_parser(
+        "notes", help="Generate grounded study notes from retrieval results"
+    )
+    notes.add_argument("--query", required=True, help="Study topic or question")
+    notes.add_argument(
+        "--index-input",
+        default="data/processed/retrieval_vectors.npy",
+        help="Path to vector index (.npy)",
+    )
+    notes.add_argument(
+        "--meta-input",
+        default="data/processed/retrieval_meta.jsonl",
+        help="Path to retrieval metadata JSONL",
+    )
+    notes.add_argument(
+        "--output",
+        default="data/processed/notes.json",
+        help="Path to notes JSON output",
+    )
+    notes.add_argument("--top-k", type=int, default=6, help="Top K evidence chunks")
+    notes.add_argument(
+        "--model",
+        default="sentence-transformers/all-MiniLM-L6-v2",
+        help="Embedding model name",
+    )
+
     subparsers.add_parser("plan", help="Print next implementation steps")
     return parser
 
@@ -100,6 +170,46 @@ def main() -> None:
             f"covered={summary['covered_records']} "
             f"uncovered={summary['uncovered_records']} "
             f"coverage={summary['coverage_output']}"
+        )
+        return
+
+    if args.command == "index":
+        summary = build_index(
+            chunks_path=args.input,
+            index_path=args.index_output,
+            meta_path=args.meta_output,
+            model_name=args.model,
+        )
+        print(
+            f"Index complete. vectors={summary['vectors']} dim={summary['dim']} "
+            f"index={summary['index_path']} meta={summary['meta_path']}"
+        )
+        return
+
+    if args.command == "search":
+        rows = search_index(
+            query=args.query,
+            index_path=args.index_input,
+            meta_path=args.meta_input,
+            top_k=args.top_k,
+            model_name=args.model,
+        )
+        for row in rows:
+            print(json.dumps(row, ensure_ascii=True))
+        return
+
+    if args.command == "notes":
+        summary = generate_notes(
+            query=args.query,
+            index_path=args.index_input,
+            meta_path=args.meta_input,
+            output_path=args.output,
+            top_k=args.top_k,
+            model_name=args.model,
+        )
+        print(
+            f"Notes complete. output={summary['output']} "
+            f"citations={summary['citations']}"
         )
         return
 

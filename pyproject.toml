@@ -8,7 +8,10 @@ version = "0.1.0"
 description = "Local-first edge AI researcher assistant"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+  "numpy>=1.26.0",
+  "sentence-transformers>=3.0.0",
+]
 
 [project.scripts]
 researcher-ai = "researcher_ai.main:main"
