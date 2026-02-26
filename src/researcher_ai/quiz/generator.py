@@ -6,10 +6,12 @@ from pathlib import Path
 from researcher_ai.retrieval.index import search_index
 from researcher_ai.utils.text_clean import (
     best_topic_phrase,
+    contains_hard_noise,
     is_useful_sentence,
     normalize_text,
     score_sentence,
     split_sentences,
+    trim_for_display,
 )
 
 
@@ -86,8 +88,10 @@ def generate_quiz(
         definition = _pick_definition(row["text"])
         if not definition:
             continue
+        if contains_hard_noise(definition):
+            continue
 
-        answer_text = definition.rstrip(".")
+        answer_text = trim_for_display(definition.rstrip("."), max_chars=190)
         topic = best_topic_phrase(answer_text)
         if topic == "the topic":
             topic = "the main concept"
