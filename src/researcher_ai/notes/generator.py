@@ -5,10 +5,12 @@ from pathlib import Path
 
 from researcher_ai.retrieval.index import search_index
 from researcher_ai.utils.text_clean import (
+    contains_hard_noise,
     is_useful_sentence,
     normalize_text,
     score_sentence,
     split_sentences,
+    trim_for_display,
 )
 
 
@@ -69,13 +71,15 @@ def generate_notes(
         if not sentences:
             continue
         first = normalize_text(sentences[0])
+        if contains_hard_noise(first):
+            continue
         if first not in seen_points:
             key_points.append({"text": first, "citation": row["citation"]})
             seen_points.add(first)
             bucket = _topic_bucket(first)
             structured[bucket].append({"text": first, "citation": row["citation"]})
 
-        simple = normalize_text(min(sentences, key=len))
+        simple = trim_for_display(normalize_text(min(sentences, key=len)), max_chars=180)
         if simple not in seen_points:
             seen_points.add(simple)
             ground_up.append(
@@ -85,7 +89,7 @@ def generate_notes(
                 }
             )
 
-        longer = normalize_text(max(sentences, key=len))
+        longer = trim_for_display(normalize_text(max(sentences, key=len)), max_chars=220)
         if longer not in seen_points:
             seen_points.add(longer)
             deep_dive.append(

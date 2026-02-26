@@ -7,6 +7,17 @@ NOISE_PATTERNS = [
     r"\bbefore the lecture\b",
     r"\bnext time\b",
     r"\bsummary\b",
+    r"\binstructor\b",
+    r"\bassistant professor\b",
+    r"\bdivision of computer science\b",
+    r"\bkonkuk university\b",
+    r"\bver\.\d+\b",
+    r"\btokenization\b",
+    r"\bprint\(",
+    r"\b본강의자료\b",
+    r"\b수업목적\b",
+    r"\b공유할수\b",
+    r"\b법적책임\b",
     r"^\d+\s+",
 ]
 
@@ -86,3 +97,43 @@ def best_topic_phrase(text: str) -> str:
         return "the topic"
     phrase = " ".join(candidates[:3]).lower()
     return phrase
+
+
+def contains_hard_noise(text: str) -> bool:
+    s = normalize_text(text).lower()
+    if "..." in s and len(s.split()) < 12:
+        return True
+    if "print(" in s or "tokenization" in s:
+        return True
+    if "['" in s and "']" in s:
+        return True
+    if s.startswith("oder)") or s.startswith("mmender") or s.startswith("ion &"):
+        return True
+    if s.count(",") > 18 and s.count(".") <= 2:
+        return True
+    return False
+
+
+def query_overlap_score(text: str, query: str) -> float:
+    t_words = {
+        w for w in re.findall(r"[a-zA-Z]{3,}", normalize_text(text).lower())
+        if w not in {"what", "from", "then", "this", "that", "with", "about"}
+    }
+    q_words = {
+        w for w in re.findall(r"[a-zA-Z]{3,}", normalize_text(query).lower())
+        if w not in {"what", "from", "then", "this", "that", "with", "about"}
+    }
+    if not q_words:
+        return 0.0
+    return len(t_words & q_words) / len(q_words)
+
+
+def trim_for_display(text: str, max_chars: int = 220) -> str:
+    s = normalize_text(text)
+    if len(s) <= max_chars:
+        return s
+    clipped = s[:max_chars]
+    last_space = clipped.rfind(" ")
+    if last_space > 60:
+        clipped = clipped[:last_space]
+    return clipped.rstrip(" ,;:-") + "..."
