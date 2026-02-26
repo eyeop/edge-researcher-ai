@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from researcher_ai.utils.text_clean import is_useful_sentence, score_sentence
+
 
 def _load_jsonl(path: Path) -> list[dict]:
     rows: list[dict] = []
@@ -126,18 +128,22 @@ def search_index(
     used_citations: set[str] = set()
     for idx in sorted_indices:
         row = rows[int(idx)]
+        text = row["text"]
+        if not is_useful_sentence(text, min_chars=35):
+            continue
+        final_score = float(scores[int(idx)]) + (0.08 * score_sentence(text))
         if diversify_citations and row["citation"] in used_citations:
             continue
         used_citations.add(row["citation"])
         results.append(
             {
                 "rank": len(results) + 1,
-                "score": float(scores[int(idx)]),
+                "score": final_score,
                 "citation": row["citation"],
                 "chunk_id": row["chunk_id"],
                 "source_path": row["source_path"],
                 "page": row["page"],
-                "text": row["text"],
+                "text": text,
             }
         )
         if len(results) >= max(top_k, 1):

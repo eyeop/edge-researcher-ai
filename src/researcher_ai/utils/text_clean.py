@@ -7,6 +7,17 @@ NOISE_PATTERNS = [
     r"\bbefore the lecture\b",
     r"\bnext time\b",
     r"\bsummary\b",
+    r"\binstructor\b",
+    r"\bassistant professor\b",
+    r"\bdivision of computer science\b",
+    r"\bkonkuk university\b",
+    r"\bver\.\d+\b",
+    r"\btokenization\b",
+    r"\bprint\(",
+    r"\b본강의자료\b",
+    r"\b수업목적\b",
+    r"\b공유할수\b",
+    r"\b법적책임\b",
     r"^\d+\s+",
 ]
 
