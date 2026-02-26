@@ -84,6 +84,7 @@ def search_index(
     meta_path: str,
     top_k: int = 5,
     model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
+    diversify_citations: bool = True,
 ) -> list[dict]:
     if not query.strip():
         raise ValueError("Query must not be empty")
@@ -120,15 +121,17 @@ def search_index(
     )[0].astype(np.float32)
 
     scores = vectors @ qvec
-    k = min(max(top_k, 1), len(scores))
-    top_indices = np.argsort(-scores)[:k]
-
     results: list[dict] = []
-    for rank, idx in enumerate(top_indices, start=1):
+    sorted_indices = np.argsort(-scores)
+    used_citations: set[str] = set()
+    for idx in sorted_indices:
         row = rows[int(idx)]
+        if diversify_citations and row["citation"] in used_citations:
+            continue
+        used_citations.add(row["citation"])
         results.append(
             {
-                "rank": rank,
+                "rank": len(results) + 1,
                 "score": float(scores[int(idx)]),
                 "citation": row["citation"],
                 "chunk_id": row["chunk_id"],
@@ -137,4 +140,6 @@ def search_index(
                 "text": row["text"],
             }
         )
+        if len(results) >= max(top_k, 1):
+            break
     return results

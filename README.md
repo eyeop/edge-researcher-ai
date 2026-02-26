@@ -107,6 +107,7 @@ researcher-ai notes \
 - `key_points`: condensed important statements
 - `ground_up`: beginner-friendly explanation snippets
 - `deep_dive`: technical detail snippets
+- `structured_notes`: fundamentals, core methods, exam focus, mistakes, checklist
 - `citations`: exact evidence pointers
 
 Generate quiz set:
