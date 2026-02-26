@@ -4,19 +4,23 @@ import json
 from pathlib import Path
 
 from researcher_ai.retrieval.index import search_index
-
-
-def _sentence_split(text: str) -> list[str]:
-    cleaned = text.replace("\n", " ").strip()
-    if not cleaned:
-        return []
-    parts = [p.strip() for p in cleaned.split(".") if p.strip()]
-    return [p + "." for p in parts]
-
+from researcher_ai.utils.text_clean import (
+    best_topic_phrase,
+    is_useful_sentence,
+    normalize_text,
+    split_sentences,
+)
 
 def _fallback_definition(text: str) -> str:
-    tokens = text.split()
+    tokens = normalize_text(text).split()
     return " ".join(tokens[: min(len(tokens), 12)]).strip()
+
+
+def _pick_definition(text: str) -> str:
+    sentences = split_sentences(text)
+    useful = [s for s in sentences if is_useful_sentence(s, min_chars=45)]
+    selected = useful[0] if useful else (sentences[0] if sentences else normalize_text(text))
+    return normalize_text(selected)
 
 
 def generate_quiz(
@@ -27,13 +31,14 @@ def generate_quiz(
     question_count: int = 5,
     model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
 ) -> dict:
-    top_k = max(question_count, 3)
+    top_k = max(question_count * 2, 6)
     rows = search_index(
         query=query,
         index_path=index_path,
         meta_path=meta_path,
         top_k=top_k,
         model_name=model_name,
+        diversify_citations=True,
     )
     if not rows:
         raise ValueError("No retrieval results found for quiz generation.")
@@ -43,18 +48,17 @@ def generate_quiz(
     for row in rows:
         if len(questions) >= question_count:
             break
-        sentences = _sentence_split(row["text"])
-        if not sentences:
+        definition = _pick_definition(row["text"])
+        if not definition:
             continue
 
-        definition = sentences[0]
         answer_text = definition.replace(".", "")
-        keyword = answer_text.split(" ")[0] if answer_text else "concept"
+        topic = best_topic_phrase(answer_text)
 
         mcq = {
             "id": f"Q{qid}",
             "type": "mcq",
-            "question": f"Which statement best matches the source about '{keyword}'?",
+            "question": f"Which statement best matches the source about {topic}?",
             "choices": [
                 answer_text,
                 "It is unrelated to model performance and deployment.",

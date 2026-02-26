@@ -3,9 +3,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from researcher_ai.utils.text_clean import is_useful_sentence, normalize_text
+
 
 def _split_text(text: str, max_chars: int, overlap_chars: int) -> list[str]:
-    cleaned = " ".join(text.split()).strip()
+    cleaned = normalize_text(text)
     if not cleaned:
         return []
     if len(cleaned) <= max_chars:
@@ -17,6 +19,10 @@ def _split_text(text: str, max_chars: int, overlap_chars: int) -> list[str]:
     while start < len(cleaned):
         end = min(start + max_chars, len(cleaned))
         chunk = cleaned[start:end].strip()
+        if end < len(cleaned):
+            last_space = chunk.rfind(" ")
+            if last_space > int(max_chars * 0.6):
+                chunk = chunk[:last_space].strip()
         if chunk:
             chunks.append(chunk)
         if end >= len(cleaned):
@@ -59,6 +65,8 @@ def chunk_ingested_records(
         valid = 0
         for idx, chunk_text in enumerate(split_items, start=1):
             if len(chunk_text) < min_chunk_chars:
+                continue
+            if not is_useful_sentence(chunk_text, min_chars=min_chunk_chars):
                 continue
             valid += 1
             chunks.append(

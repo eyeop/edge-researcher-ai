@@ -4,14 +4,13 @@ import json
 from pathlib import Path
 
 from researcher_ai.retrieval.index import search_index
+from researcher_ai.utils.text_clean import is_useful_sentence, normalize_text, split_sentences
 
 
-def _sentence_split(text: str) -> list[str]:
-    cleaned = text.replace("\n", " ").strip()
-    if not cleaned:
-        return []
-    sentences = [part.strip() for part in cleaned.split(".") if part.strip()]
-    return [s + "." for s in sentences]
+def _pick_sentences(text: str) -> list[str]:
+    sentences = split_sentences(text)
+    useful = [s for s in sentences if is_useful_sentence(s, min_chars=45)]
+    return useful if useful else sentences
 
 
 def generate_notes(
@@ -28,6 +27,7 @@ def generate_notes(
         meta_path=meta_path,
         top_k=top_k,
         model_name=model_name,
+        diversify_citations=True,
     )
     if not results:
         raise ValueError("No retrieval results found for note generation.")
@@ -38,15 +38,15 @@ def generate_notes(
     seen_points: set[str] = set()
 
     for row in results:
-        sentences = _sentence_split(row["text"])
+        sentences = _pick_sentences(row["text"])
         if not sentences:
             continue
-        first = sentences[0]
+        first = normalize_text(sentences[0])
         if first not in seen_points:
             key_points.append({"text": first, "citation": row["citation"]})
             seen_points.add(first)
 
-        simple = min(sentences, key=len)
+        simple = normalize_text(min(sentences, key=len))
         ground_up.append(
             {
                 "text": f"Basic idea: {simple}",
@@ -54,7 +54,7 @@ def generate_notes(
             }
         )
 
-        longer = max(sentences, key=len)
+        longer = normalize_text(max(sentences, key=len))
         deep_dive.append(
             {
                 "text": f"Technical detail: {longer}",

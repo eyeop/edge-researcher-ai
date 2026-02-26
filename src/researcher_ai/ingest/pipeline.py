@@ -6,6 +6,8 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Iterable
 
+from researcher_ai.utils.text_clean import normalize_text
+
 
 TEXT_EXTENSIONS = {".txt", ".md"}
 PDF_EXTENSIONS = {".pdf"}
@@ -25,7 +27,7 @@ class IngestRecord:
 
 
 def _clean_text(text: str) -> str:
-    return " ".join(text.split()).strip()
+    return normalize_text(text)
 
 
 def _iter_files(input_path: Path) -> Iterable[Path]:
