@@ -1,5 +1,7 @@
 import argparse
 
+from researcher_ai.ingest.pipeline import ingest_materials
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -10,6 +12,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     ingest = subparsers.add_parser("ingest", help="Ingest study materials")
     ingest.add_argument("--input", required=True, help="Path to input file or folder")
+    ingest.add_argument(
+        "--output",
+        default="data/processed/ingested.jsonl",
+        help="Path for JSONL ingest output",
+    )
+    ingest.add_argument(
+        "--min-chars",
+        type=int,
+        default=20,
+        help="Skip extracted text shorter than this threshold",
+    )
 
     subparsers.add_parser("plan", help="Print next implementation steps")
     return parser
@@ -20,7 +33,15 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "ingest":
-        print(f"[TODO] ingest pipeline for: {args.input}")
+        summary = ingest_materials(
+            input_path=args.input,
+            output_path=args.output,
+            min_chars=args.min_chars,
+        )
+        print(
+            f"Ingest complete. records={summary['records']} "
+            f"skipped_files={summary['skipped_files']} output={summary['output']}"
+        )
         return
 
     if args.command == "plan":
