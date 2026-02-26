@@ -60,8 +60,21 @@ researcher-ai ingest --input data/raw --output data/processed/ingested.jsonl
 Output format is JSONL with citation fields such as `lecture1.pdf:p3:i1`.
 This is important because every later summary and quiz can point back to exact source evidence.
 
+Run chunking + coverage check:
+```bash
+researcher-ai chunk \
+  --input data/processed/ingested.jsonl \
+  --output data/processed/chunks.jsonl \
+  --coverage-output data/processed/coverage.json
+```
+
+Why this step matters:
+- Retrieval models work better on medium-sized chunks than full pages.
+- Coverage report verifies whether any ingested citation failed to produce a usable chunk.
+- `uncovered_citations` in `coverage.json` gives exact items to inspect/fix.
+
 ## Next Steps
 1. Implement ingest pipeline (PDF/image/text)
-2. Add chunking + citation-preserving schema
+2. Implement chunking + coverage report
 3. Add retrieval and local LLM generation
-4. Add quiz generation and evaluation
+4. Add note generation and quiz evaluation
