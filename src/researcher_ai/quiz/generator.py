@@ -8,8 +8,10 @@ from researcher_ai.utils.text_clean import (
     best_topic_phrase,
     is_useful_sentence,
     normalize_text,
+    score_sentence,
     split_sentences,
 )
+
 
 def _fallback_definition(text: str) -> str:
     tokens = normalize_text(text).split()
@@ -19,8 +21,38 @@ def _fallback_definition(text: str) -> str:
 def _pick_definition(text: str) -> str:
     sentences = split_sentences(text)
     useful = [s for s in sentences if is_useful_sentence(s, min_chars=45)]
-    selected = useful[0] if useful else (sentences[0] if sentences else normalize_text(text))
+    candidates = useful if useful else sentences
+    selected = (
+        sorted(candidates, key=score_sentence, reverse=True)[0]
+        if candidates
+        else normalize_text(text)
+    )
     return normalize_text(selected)
+
+
+def _distractors(topic: str) -> list[str]:
+    t = topic.lower()
+    if any(k in t for k in ["classification", "regression", "clustering"]):
+        return [
+            "It is only about data storage, not analysis.",
+            "It is unrelated to model evaluation metrics.",
+            "It replaces the need for training data quality checks.",
+        ]
+    if any(k in t for k in ["exam", "mid-term", "final"]):
+        return [
+            "It means all assessments are open-book and optional.",
+            "It focuses only on coding style, not theory.",
+            "It excludes handwritten or reasoning-based questions.",
+        ]
+    return [
+        "It is unrelated to asking meaningful analytical questions.",
+        "It only applies to cloud-only systems and not local AI.",
+        "It removes the need for interpretation and critical judgment.",
+    ]
+
+
+def _mcq_stem(topic: str) -> str:
+    return f"According to the lecture, which statement about {topic} is most accurate?"
 
 
 def generate_quiz(
@@ -44,32 +76,39 @@ def generate_quiz(
         raise ValueError("No retrieval results found for quiz generation.")
 
     questions: list[dict] = []
+    used_citations: set[str] = set()
     qid = 1
     for row in rows:
         if len(questions) >= question_count:
             break
+        if row["citation"] in used_citations:
+            continue
         definition = _pick_definition(row["text"])
         if not definition:
             continue
 
-        answer_text = definition.replace(".", "")
+        answer_text = definition.rstrip(".")
         topic = best_topic_phrase(answer_text)
+        if topic == "the topic":
+            topic = "the main concept"
+        wrong = _distractors(topic)
 
         mcq = {
             "id": f"Q{qid}",
             "type": "mcq",
-            "question": f"Which statement best matches the source about {topic}?",
+            "question": _mcq_stem(topic),
             "choices": [
                 answer_text,
-                "It is unrelated to model performance and deployment.",
-                "It only applies to cloud-only systems.",
-                "It removes the need for data preprocessing.",
+                wrong[0],
+                wrong[1],
+                wrong[2],
             ],
             "answer": "A",
             "explanation": f"Choice A is directly supported by: {row['citation']}",
             "citation": row["citation"],
         }
         questions.append(mcq)
+        used_citations.add(row["citation"])
         qid += 1
 
         if len(questions) >= question_count:

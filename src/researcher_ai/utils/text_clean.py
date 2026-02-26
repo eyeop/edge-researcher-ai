@@ -2,6 +2,14 @@ from __future__ import annotations
 
 import re
 
+NOISE_PATTERNS = [
+    r"\bcourse administration\b",
+    r"\bbefore the lecture\b",
+    r"\bnext time\b",
+    r"\bsummary\b",
+    r"^\d+\s+",
+]
+
 
 def normalize_text(text: str) -> str:
     text = text.replace("\u25aa", " ").replace("\u2022", " ")
@@ -38,7 +46,36 @@ def is_useful_sentence(sentence: str, min_chars: int = 35) -> bool:
         return False
     if re.match(r"^[\d\W_]+$", s):
         return False
+    lower = s.lower()
+    for pattern in NOISE_PATTERNS:
+        if re.search(pattern, lower):
+            return False
     return True
+
+
+def score_sentence(sentence: str) -> float:
+    s = normalize_text(sentence)
+    if not s:
+        return 0.0
+    words = s.split()
+    length_score = min(len(words) / 24.0, 1.0)
+    keyword_bonus = 0.0
+    for token in [
+        "classification",
+        "regression",
+        "clustering",
+        "evaluation",
+        "embedding",
+        "topic",
+        "exam",
+        "pipeline",
+        "model",
+        "learning",
+    ]:
+        if token in s.lower():
+            keyword_bonus += 0.08
+    punctuation_penalty = 0.2 if s.count("-") > 7 else 0.0
+    return max(length_score + keyword_bonus - punctuation_penalty, 0.0)
 
 
 def best_topic_phrase(text: str) -> str:
