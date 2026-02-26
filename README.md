@@ -73,6 +73,27 @@ Why this step matters:
 - Coverage report verifies whether any ingested citation failed to produce a usable chunk.
 - `uncovered_citations` in `coverage.json` gives exact items to inspect/fix.
 
+Build retrieval index:
+```bash
+researcher-ai index \
+  --input data/processed/chunks.jsonl \
+  --index-output data/processed/retrieval_vectors.npy \
+  --meta-output data/processed/retrieval_meta.jsonl
+```
+
+Search top relevant chunks:
+```bash
+researcher-ai search \
+  --query "What is edge ai and why efficiency matters?" \
+  --index-input data/processed/retrieval_vectors.npy \
+  --meta-input data/processed/retrieval_meta.jsonl \
+  --top-k 5
+```
+
+Why retrieval comes before generation:
+- Notes and quizzes should be evidence-based, not hallucinated.
+- Retrieval gives traceable citations for each generated claim.
+
 ## Next Steps
 1. Implement ingest pipeline (PDF/image/text)
 2. Implement chunking + coverage report
