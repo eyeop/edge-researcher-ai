@@ -3,6 +3,7 @@ import json
 
 from researcher_ai.chunking.pipeline import chunk_ingested_records
 from researcher_ai.ingest.pipeline import ingest_materials
+from researcher_ai.notes.generator import generate_notes
 from researcher_ai.retrieval.index import build_index, search_index
 
 
@@ -105,6 +106,32 @@ def build_parser() -> argparse.ArgumentParser:
         help="Embedding model name",
     )
 
+    notes = subparsers.add_parser(
+        "notes", help="Generate grounded study notes from retrieval results"
+    )
+    notes.add_argument("--query", required=True, help="Study topic or question")
+    notes.add_argument(
+        "--index-input",
+        default="data/processed/retrieval_vectors.npy",
+        help="Path to vector index (.npy)",
+    )
+    notes.add_argument(
+        "--meta-input",
+        default="data/processed/retrieval_meta.jsonl",
+        help="Path to retrieval metadata JSONL",
+    )
+    notes.add_argument(
+        "--output",
+        default="data/processed/notes.json",
+        help="Path to notes JSON output",
+    )
+    notes.add_argument("--top-k", type=int, default=6, help="Top K evidence chunks")
+    notes.add_argument(
+        "--model",
+        default="sentence-transformers/all-MiniLM-L6-v2",
+        help="Embedding model name",
+    )
+
     subparsers.add_parser("plan", help="Print next implementation steps")
     return parser
 
@@ -169,6 +196,21 @@ def main() -> None:
         )
         for row in rows:
             print(json.dumps(row, ensure_ascii=True))
+        return
+
+    if args.command == "notes":
+        summary = generate_notes(
+            query=args.query,
+            index_path=args.index_input,
+            meta_path=args.meta_input,
+            output_path=args.output,
+            top_k=args.top_k,
+            model_name=args.model,
+        )
+        print(
+            f"Notes complete. output={summary['output']} "
+            f"citations={summary['citations']}"
+        )
         return
 
     parser.print_help()

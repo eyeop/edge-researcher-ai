@@ -94,8 +94,23 @@ Why retrieval comes before generation:
 - Notes and quizzes should be evidence-based, not hallucinated.
 - Retrieval gives traceable citations for each generated claim.
 
+Generate grounded notes:
+```bash
+researcher-ai notes \
+  --query "Explain edge ai from basics and also technical depth" \
+  --index-input data/processed/retrieval_vectors.npy \
+  --meta-input data/processed/retrieval_meta.jsonl \
+  --output data/processed/notes.json
+```
+
+`notes.json` includes:
+- `key_points`: condensed important statements
+- `ground_up`: beginner-friendly explanation snippets
+- `deep_dive`: technical detail snippets
+- `citations`: exact evidence pointers
+
 ## Next Steps
 1. Implement ingest pipeline (PDF/image/text)
 2. Implement chunking + coverage report
-3. Add retrieval and local LLM generation
+3. Add retrieval indexing and search
 4. Add note generation and quiz evaluation
