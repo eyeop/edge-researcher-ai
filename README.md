@@ -123,9 +123,21 @@ researcher-ai quiz \
 - `mcq`, `short_answer`, and `explain_why` questions
 - answer key and source citations per question
 
+Run local GUI (Streamlit):
+```bash
+streamlit run app_streamlit.py
+```
+
+GUI flow:
+1. Set paths (defaults already match project structure).
+2. Click `Run Ingest`, `Run Chunk`, `Run Index`.
+3. Enter study query and click `Generate Notes` and `Generate Quiz`.
+4. Preview `coverage.json`, `notes.json`, and `quiz.json` in-app.
+
 ## Next Steps
 1. Implement ingest pipeline (PDF/image/text)
 2. Implement chunking + coverage report
 3. Add retrieval indexing and search
 4. Add note generation and quiz evaluation
 5. Add Streamlit GUI for upload, run, and review
+6. Add result quality metrics and final demo script
