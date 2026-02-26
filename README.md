@@ -109,8 +109,23 @@ researcher-ai notes \
 - `deep_dive`: technical detail snippets
 - `citations`: exact evidence pointers
 
+Generate quiz set:
+```bash
+researcher-ai quiz \
+  --query "Test me on edge ai fundamentals and tradeoffs" \
+  --index-input data/processed/retrieval_vectors.npy \
+  --meta-input data/processed/retrieval_meta.jsonl \
+  --output data/processed/quiz.json \
+  --count 6
+```
+
+`quiz.json` includes:
+- `mcq`, `short_answer`, and `explain_why` questions
+- answer key and source citations per question
+
 ## Next Steps
 1. Implement ingest pipeline (PDF/image/text)
 2. Implement chunking + coverage report
 3. Add retrieval indexing and search
 4. Add note generation and quiz evaluation
+5. Add Streamlit GUI for upload, run, and review
