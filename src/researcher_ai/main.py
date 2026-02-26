@@ -4,6 +4,7 @@ import json
 from researcher_ai.chunking.pipeline import chunk_ingested_records
 from researcher_ai.ingest.pipeline import ingest_materials
 from researcher_ai.notes.generator import generate_notes
+from researcher_ai.present.formatter import prepare_presentation
 from researcher_ai.quiz.generator import generate_quiz
 from researcher_ai.retrieval.index import build_index, search_index
 
@@ -182,6 +183,31 @@ def build_parser() -> argparse.ArgumentParser:
         help="Embedding model name",
     )
 
+    present = subparsers.add_parser(
+        "present",
+        help="Format notes/quiz into concise presentation-ready outputs",
+    )
+    present.add_argument(
+        "--notes-input",
+        default="data/processed/notes.json",
+        help="Path to generated notes JSON",
+    )
+    present.add_argument(
+        "--quiz-input",
+        default="data/processed/quiz.json",
+        help="Path to generated quiz JSON",
+    )
+    present.add_argument(
+        "--notes-output",
+        default="data/processed/presentation_notes.json",
+        help="Path to presentation notes JSON",
+    )
+    present.add_argument(
+        "--quiz-output",
+        default="data/processed/presentation_quiz.json",
+        help="Path to presentation quiz JSON",
+    )
+
     subparsers.add_parser("plan", help="Print next implementation steps")
     return parser
 
@@ -278,6 +304,20 @@ def main() -> None:
         print(
             f"Quiz complete. output={summary['output']} "
             f"questions={summary['questions']} citations={summary['citations']}"
+        )
+        return
+
+    if args.command == "present":
+        summary = prepare_presentation(
+            notes_input_path=args.notes_input,
+            quiz_input_path=args.quiz_input,
+            notes_output_path=args.notes_output,
+            quiz_output_path=args.quiz_output,
+        )
+        print(
+            f"Presentation format complete. notes={summary['notes_output']} "
+            f"quiz={summary['quiz_output']} "
+            f"points={summary['notes_points']} questions={summary['quiz_questions']}"
         )
         return
 
