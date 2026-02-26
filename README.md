@@ -124,6 +124,17 @@ researcher-ai quiz \
 - `mcq`, `short_answer`, and `explain_why` questions
 - answer key and source citations per question
 
+Generate presentation-ready outputs:
+```bash
+researcher-ai present \
+  --notes-input data/processed/notes.json \
+  --quiz-input data/processed/quiz.json \
+  --notes-output data/processed/presentation_notes.json \
+  --quiz-output data/processed/presentation_quiz.json
+```
+
+`presentation_notes.json` and `presentation_quiz.json` are cleaner, shorter versions for demos.
+
 Run local GUI (Streamlit):
 ```bash
 streamlit run app_streamlit.py

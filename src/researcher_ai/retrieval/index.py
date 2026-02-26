@@ -92,6 +92,7 @@ def search_index(
     top_k: int = 5,
     model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
     diversify_citations: bool = True,
+    source_filters: list[str] | None = None,
 ) -> list[dict]:
     if not query.strip():
         raise ValueError("Query must not be empty")
@@ -128,11 +129,16 @@ def search_index(
     )[0].astype(np.float32)
 
     scores = vectors @ qvec
+    active_filters = [s.lower().strip() for s in (source_filters or []) if s.strip()]
     results: list[dict] = []
     sorted_indices = np.argsort(-scores)
     used_citations: set[str] = set()
     for idx in sorted_indices:
         row = rows[int(idx)]
+        if active_filters:
+            source_name = Path(row["source_path"]).name.lower()
+            if not any(token in source_name for token in active_filters):
+                continue
         text = row["text"]
         if not is_useful_sentence(text, min_chars=35):
             continue
