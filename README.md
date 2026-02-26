@@ -47,6 +47,27 @@ pip install -e .
 python -m researcher_ai --help
 ```
 
+## GUI Run (Chrome)
+1. Start app:
+```bash
+streamlit run app_streamlit.py
+```
+2. Open in browser:
+- `http://localhost:8501`
+3. Put lecture files in:
+- `data/raw/`
+4. In GUI click in order:
+- `Run Ingest` -> `Run Chunk` -> `Run Index` -> `Generate Notes` -> `Generate Quiz`
+5. For best quality on one lecture, run filtered commands in terminal:
+```bash
+researcher-ai notes --query "Summarize HMM from basics to exam-level depth, include pitfalls" --source-filter "5-1. Statistical Models" --output data/processed/notes_hmm.json
+researcher-ai quiz --query "Create exam-style HMM questions with answers" --source-filter "5-1. Statistical Models" --output data/processed/quiz_hmm.json --count 8
+researcher-ai present --notes-input data/processed/notes_hmm.json --quiz-input data/processed/quiz_hmm.json --notes-output data/processed/presentation_notes_hmm.json --quiz-output data/processed/presentation_quiz_hmm.json
+```
+6. Review files:
+- `data/processed/presentation_notes_hmm.json`
+- `data/processed/presentation_quiz_hmm.json`
+
 Install file extraction dependencies:
 ```bash
 pip install pymupdf pillow pytesseract
