@@ -64,6 +64,7 @@ def generate_quiz(
     output_path: str,
     question_count: int = 5,
     model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
+    source_filters: list[str] | None = None,
 ) -> dict:
     top_k = max(question_count * 2, 6)
     rows = search_index(
@@ -73,6 +74,7 @@ def generate_quiz(
         top_k=top_k,
         model_name=model_name,
         diversify_citations=True,
+        source_filters=source_filters,
     )
     if not rows:
         raise ValueError("No retrieval results found for quiz generation.")

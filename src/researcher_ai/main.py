@@ -102,6 +102,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     search.add_argument("--top-k", type=int, default=5, help="Top K results")
     search.add_argument(
+        "--source-filter",
+        action="append",
+        default=[],
+        help="Optional source filename filter (repeat flag for multiple)",
+    )
+    search.add_argument(
         "--model",
         default="sentence-transformers/all-MiniLM-L6-v2",
         help="Embedding model name",
@@ -127,6 +133,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path to notes JSON output",
     )
     notes.add_argument("--top-k", type=int, default=6, help="Top K evidence chunks")
+    notes.add_argument(
+        "--source-filter",
+        action="append",
+        default=[],
+        help="Optional source filename filter (repeat flag for multiple)",
+    )
     notes.add_argument(
         "--model",
         default="sentence-transformers/all-MiniLM-L6-v2",
@@ -157,6 +169,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=6,
         help="Number of questions to generate",
+    )
+    quiz.add_argument(
+        "--source-filter",
+        action="append",
+        default=[],
+        help="Optional source filename filter (repeat flag for multiple)",
     )
     quiz.add_argument(
         "--model",
@@ -225,6 +243,7 @@ def main() -> None:
             meta_path=args.meta_input,
             top_k=args.top_k,
             model_name=args.model,
+            source_filters=args.source_filter,
         )
         for row in rows:
             print(json.dumps(row, ensure_ascii=True))
@@ -238,6 +257,7 @@ def main() -> None:
             output_path=args.output,
             top_k=args.top_k,
             model_name=args.model,
+            source_filters=args.source_filter,
         )
         print(
             f"Notes complete. output={summary['output']} "
@@ -253,6 +273,7 @@ def main() -> None:
             output_path=args.output,
             question_count=args.count,
             model_name=args.model,
+            source_filters=args.source_filter,
         )
         print(
             f"Quiz complete. output={summary['output']} "

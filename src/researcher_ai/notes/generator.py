@@ -41,6 +41,7 @@ def generate_notes(
     output_path: str,
     top_k: int = 6,
     model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
+    source_filters: list[str] | None = None,
 ) -> dict:
     requested_k = max(top_k, 6)
     results = search_index(
@@ -50,6 +51,7 @@ def generate_notes(
         top_k=requested_k * 2,
         model_name=model_name,
         diversify_citations=True,
+        source_filters=source_filters,
     )
     if not results:
         raise ValueError("No retrieval results found for note generation.")
