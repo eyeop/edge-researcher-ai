@@ -4,6 +4,7 @@ import json
 from researcher_ai.chunking.pipeline import chunk_ingested_records
 from researcher_ai.ingest.pipeline import ingest_materials
 from researcher_ai.notes.generator import generate_notes
+from researcher_ai.quiz.generator import generate_quiz
 from researcher_ai.retrieval.index import build_index, search_index
 
 
@@ -132,6 +133,37 @@ def build_parser() -> argparse.ArgumentParser:
         help="Embedding model name",
     )
 
+    quiz = subparsers.add_parser(
+        "quiz", help="Generate quiz questions with answer key and citations"
+    )
+    quiz.add_argument("--query", required=True, help="Study topic or question")
+    quiz.add_argument(
+        "--index-input",
+        default="data/processed/retrieval_vectors.npy",
+        help="Path to vector index (.npy)",
+    )
+    quiz.add_argument(
+        "--meta-input",
+        default="data/processed/retrieval_meta.jsonl",
+        help="Path to retrieval metadata JSONL",
+    )
+    quiz.add_argument(
+        "--output",
+        default="data/processed/quiz.json",
+        help="Path to quiz JSON output",
+    )
+    quiz.add_argument(
+        "--count",
+        type=int,
+        default=6,
+        help="Number of questions to generate",
+    )
+    quiz.add_argument(
+        "--model",
+        default="sentence-transformers/all-MiniLM-L6-v2",
+        help="Embedding model name",
+    )
+
     subparsers.add_parser("plan", help="Print next implementation steps")
     return parser
 
@@ -210,6 +242,21 @@ def main() -> None:
         print(
             f"Notes complete. output={summary['output']} "
             f"citations={summary['citations']}"
+        )
+        return
+
+    if args.command == "quiz":
+        summary = generate_quiz(
+            query=args.query,
+            index_path=args.index_input,
+            meta_path=args.meta_input,
+            output_path=args.output,
+            question_count=args.count,
+            model_name=args.model,
+        )
+        print(
+            f"Quiz complete. output={summary['output']} "
+            f"questions={summary['questions']} citations={summary['citations']}"
         )
         return
 
